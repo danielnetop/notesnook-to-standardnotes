@@ -1,0 +1,11 @@
+notesnook-to-standardnotes
+notesnook-to-standardnotes.exe
+.idea/
+vendor
+*.out
+.vscode/
+bin/
+*-plain*
+attachments.zip
+*.nnbackupz
+*tags*.txt
