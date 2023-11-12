@@ -83,7 +83,10 @@ func convertNotesnookToStandardNotes(nooks []notesnook.Nook) StandardNotes {
 	}
 }
 
-const matchHTMLTags = "img,span"
+const (
+	fileAttributeName = "data-filename"
+	matchHTMLTags     = "*[" + fileAttributeName + "]"
+)
 
 func mapNookNoteToStandardNote(
 	nook notesnook.Nook,
@@ -95,8 +98,10 @@ func mapNookNoteToStandardNote(
 	}
 
 	doc.Find(matchHTMLTags).Each(func(i int, s *goquery.Selection) {
-		dataFilename, _ := s.Attr("data-filename")
-		s.ReplaceWithHtml(fileUtil.ConvertFileToBase64(dataFilename))
+		dataFilename, hasAttr := s.Attr(fileAttributeName)
+		if hasAttr {
+			s.ReplaceWithHtml(fileUtil.ConvertFileToBase64(dataFilename))
+		}
 	})
 
 	html, err := doc.Html()
