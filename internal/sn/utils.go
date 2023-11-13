@@ -27,9 +27,10 @@ type Notebook struct {
 }
 
 var (
-	notebooks        = make(map[string]Notebook, 0)
-	noteIDToUUID     = make(map[string]uuid.UUID, 0)
-	notebookHasNotes = make(map[string][]string)
+	notebooks         = make(map[string]Notebook, 0)
+	noteIDToUUID      = make(map[string]uuid.UUID, 0)
+	notebookHasNotes  = make(map[string][]string, 0)
+	imageHashFilename = make(map[string]string, 0)
 )
 
 func convertNotesnookToStandardNotes(nooks []notesnook.Nook) StandardNotes {
@@ -39,36 +40,7 @@ func convertNotesnookToStandardNotes(nooks []notesnook.Nook) StandardNotes {
 	)
 
 	for _, nook := range nooks {
-		switch nook.Type {
-		case notesnook.TypeTipTap:
-			tipTaps[nook.ID] = fmt.Sprintf("%s", nook.Data)
-		case notesnook.TypeNotebook: // notebook have topics (I'm treating them as sub notebooks)
-			id := uuid.New()
-			notebooks[nook.ID] = Notebook{
-				ID:        id,
-				NookID:    nook.ID,
-				Title:     nook.Title,
-				CreatedAt: time.MilliToTime(nook.DateCreated),
-				UpdatedAt: time.MilliToTime(nook.DateModified),
-			}
-
-			if len(nook.Topics) > 0 {
-				for _, topic := range nook.Topics {
-					notebooks[topic.ID] = Notebook{
-						ID:        uuid.New(),
-						NookID:    topic.ID,
-						Title:     topic.Title,
-						Parent:    &id,
-						CreatedAt: time.MilliToTime(topic.DateCreated),
-						UpdatedAt: time.MilliToTime(topic.DateEdited),
-					}
-				}
-			}
-		case notesnook.TypeRelation: // relation from notebook to note
-			// 1 note can only be in 1 notebook/topic
-			notebookHasNotes[nook.From.ID] = append(notebookHasNotes[nook.From.ID], nook.To.ID)
-		default:
-		}
+		storeDataInMaps(nook, tipTaps)
 	}
 
 	// can't guarantee that the tiptaps are fetched before the not
@@ -84,8 +56,45 @@ func convertNotesnookToStandardNotes(nooks []notesnook.Nook) StandardNotes {
 	}
 }
 
+func storeDataInMaps(nook notesnook.Nook, tipTaps map[string]string) {
+	switch nook.Type {
+	case notesnook.TypeTipTap:
+		tipTaps[nook.ID] = fmt.Sprintf("%s", nook.Data)
+	case notesnook.TypeNotebook: // notebook have topics (I'm treating them as sub notebooks)
+		id := uuid.New()
+		notebooks[nook.ID] = Notebook{
+			ID:        id,
+			NookID:    nook.ID,
+			Title:     nook.Title,
+			CreatedAt: time.MilliToTime(nook.DateCreated),
+			UpdatedAt: time.MilliToTime(nook.DateModified),
+		}
+
+		if len(nook.Topics) > 0 {
+			for _, topic := range nook.Topics {
+				notebooks[topic.ID] = Notebook{
+					ID:        uuid.New(),
+					NookID:    topic.ID,
+					Title:     topic.Title,
+					Parent:    &id,
+					CreatedAt: time.MilliToTime(topic.DateCreated),
+					UpdatedAt: time.MilliToTime(topic.DateEdited),
+				}
+			}
+		}
+	case notesnook.TypeRelation: // relation from notebook to note
+		// 1 note can only be in 1 notebook/topic
+		notebookHasNotes[nook.From.ID] = append(notebookHasNotes[nook.From.ID], nook.To.ID)
+	case notesnook.TypeAttachment:
+		if imageHashFilename[nook.Metadata.Hash] == "" {
+			imageHashFilename[nook.Metadata.Hash] = nook.Metadata.Filename
+		}
+	default:
+	}
+}
+
 const (
-	fileAttributeName = "data-filename"
+	fileAttributeName = "data-hash"
 	matchHTMLTags     = "*[" + fileAttributeName + "]"
 )
 
@@ -99,9 +108,9 @@ func mapNookNoteToStandardNote(
 	}
 
 	doc.Find(matchHTMLTags).Each(func(i int, s *goquery.Selection) {
-		dataFilename, hasAttr := s.Attr(fileAttributeName)
+		dataHash, hasAttr := s.Attr(fileAttributeName)
 		if hasAttr {
-			s.ReplaceWithHtml(fileUtil.ConvertFileToBase64(dataFilename))
+			s.ReplaceWithHtml(fileUtil.ConvertFileToBase64(imageHashFilename[dataHash]))
 		}
 	})
 
