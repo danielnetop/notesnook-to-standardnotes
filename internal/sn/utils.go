@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	md "github.com/JohannesKaufmann/html-to-markdown"
+	"github.com/JohannesKaufmann/html-to-markdown/plugin"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/google/uuid"
 
@@ -40,7 +41,7 @@ func convertNotesnookToStandardNotes(nooks []notesnook.Nook) StandardNotes {
 	for _, nook := range nooks {
 		switch nook.Type {
 		case notesnook.TypeTipTap:
-			tipTaps[nook.ID] = nook.Data
+			tipTaps[nook.ID] = fmt.Sprintf("%s", nook.Data)
 		case notesnook.TypeNotebook: // notebook have topics (I'm treating them as sub notebooks)
 			id := uuid.New()
 			notebooks[nook.ID] = Notebook{
@@ -178,6 +179,7 @@ func ConvertNotebooksToTags() StandardNotes {
 
 func convertHTMLToMarkdown(content string) string {
 	converter := md.NewConverter("", true, &md.Options{EscapeMode: "disabled"})
+	converter.Use(plugin.GitHubFlavored())
 
 	markdown, err := converter.ConvertString(content)
 	if err != nil {
