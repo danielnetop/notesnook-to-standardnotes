@@ -63,7 +63,6 @@ type Nook struct {
 	Locked       bool       `json:"locked,omitempty"`
 	Favorite     bool       `json:"favorite,omitempty"`
 	LocalOnly    bool       `json:"localOnly,omitempty"`
-	Conflicted   bool       `json:"conflicted,omitempty"`
 	Readonly     bool       `json:"readonly,omitempty"`
 	NoteID       string     `json:"noteId,omitempty"`
 	Data         string     `json:"data,omitempty"`
