@@ -39,11 +39,12 @@ type Notebook struct {
 type Type string
 
 const (
-	TypeNotebook Type = "notebook"
-	TypeNote     Type = "note"
-	TypeTipTap   Type = "tiptap"
-	TypeRelation Type = "relation"
-	TypeSettings Type = "settings"
+	TypeNotebook   Type = "notebook"
+	TypeNote       Type = "note"
+	TypeTipTap     Type = "tiptap"
+	TypeRelation   Type = "relation"
+	TypeSettings   Type = "settings"
+	TypeAttachment Type = "attachment"
 )
 
 type Nook struct {
@@ -70,4 +71,12 @@ type Nook struct {
 	From         From        `json:"from,omitempty"`
 	To           To          `json:"to,omitempty"`
 	Notebooks    []Notebook  `json:"notebooks,omitempty"`
+	Metadata     Metadata    `json:"metadata,omitempty"`
+}
+
+type Metadata struct {
+	Hash     string `json:"hash"`
+	HashType string `json:"hashType"`
+	Filename string `json:"filename"`
+	Type     string `json:"type"`
 }
