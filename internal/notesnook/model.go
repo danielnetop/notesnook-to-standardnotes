@@ -1,15 +1,16 @@
 package notesnook
 
 type ExportData struct {
-	Version    float64 `json:"version"`
-	Type       string  `json:"type"`
-	Date       int64   `json:"date"`
-	Data       string  `json:"data"`
-	Hash       string  `json:"hash"`
-	HashType   string  `json:"hash_type"`
-	Compressed bool    `json:"compressed"`
-	Encrypted  bool    `json:"encrypted"`
-	FileName   string
+	Version       float64 `json:"version"`
+	Type          string  `json:"type"`
+	Date          int64   `json:"date"`
+	Data          string  `json:"data"`
+	Hash          string  `json:"hash"`
+	HashType      string  `json:"hash_type"`
+	Compressed    bool    `json:"compressed"`
+	Encrypted     bool    `json:"encrypted"`
+	FileName      string
+	DebugFileName string
 }
 
 type Topic struct {
