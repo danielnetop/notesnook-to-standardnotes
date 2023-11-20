@@ -3,6 +3,8 @@ package sn
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	md "github.com/JohannesKaufmann/html-to-markdown"
@@ -16,44 +18,26 @@ import (
 	"github.com/danielnetop/notesnook-to-standardnotes/internal/time"
 )
 
-type Notebook struct {
-	ID        uuid.UUID
-	NookID    string
-	Title     string
-	Notes     []string
-	CreatedAt string
-	UpdatedAt string
-	Parent    *uuid.UUID
-}
+const numOfNotesPerFile = "NUM_OF_NOTES_PER_FILE"
 
 var (
-	notebooks         = make(map[string]Notebook, 0)
+	notebooks         = make(map[string]notesnook.NotebookInfo, 0)
 	noteIDToUUID      = make(map[string]uuid.UUID, 0)
 	notebookHasNotes  = make(map[string][]string, 0)
 	imageHashFilename = make(map[string]string, 0)
+	tipTaps           = make(map[string]string, 0)
 )
 
-func convertNotesnookToStandardNotes(nooks []notesnook.Nook) StandardNotes {
-	var (
-		items   []Item
-		tipTaps = make(map[string]string, 0)
-	)
+func convertNotesnookToStandardNotes(nooks []notesnook.Nook) []Item {
+	var items []Item
 
-	for _, nook := range nooks {
-		storeDataInMaps(nook, tipTaps)
-	}
-
-	// can't guarantee that the tiptaps are fetched before the not
 	for _, nook := range nooks {
 		if nook.Type == notesnook.TypeNote {
 			items = append(items, mapNookNoteToStandardNote(nook, tipTaps))
 		}
 	}
 
-	return StandardNotes{
-		Version: Version004,
-		Items:   items,
-	}
+	return items
 }
 
 func storeDataInMaps(nook notesnook.Nook, tipTaps map[string]string) {
@@ -62,7 +46,7 @@ func storeDataInMaps(nook notesnook.Nook, tipTaps map[string]string) {
 		tipTaps[nook.ID] = fmt.Sprintf("%s", nook.Data)
 	case notesnook.TypeNotebook: // notebook have topics (I'm treating them as sub notebooks)
 		id := uuid.New()
-		notebooks[nook.ID] = Notebook{
+		notebooks[nook.ID] = notesnook.NotebookInfo{
 			ID:        id,
 			NookID:    nook.ID,
 			Title:     nook.Title,
@@ -72,7 +56,7 @@ func storeDataInMaps(nook notesnook.Nook, tipTaps map[string]string) {
 
 		if len(nook.Topics) > 0 {
 			for _, topic := range nook.Topics {
-				notebooks[topic.ID] = Notebook{
+				notebooks[topic.ID] = notesnook.NotebookInfo{
 					ID:        uuid.New(),
 					NookID:    topic.ID,
 					Title:     topic.Title,
@@ -128,6 +112,8 @@ func mapNookNoteToStandardNote(
 
 	noteIDToUUID[nook.ID] = snID
 
+	dateModified := time.MilliToTime(nook.DateModified)
+
 	return Item{
 		ContentType: ContentTypeNote,
 		Content: Content{
@@ -135,9 +121,14 @@ func mapNookNoteToStandardNote(
 			Title:        nook.Title,
 			NoteType:     NoteTypePlainText,
 			PreviewPlain: nook.Headline,
+			AppData: AppData{
+				OrgStandardnotesSn: map[string]string{
+					"client_updated_at": dateModified,
+				},
+			},
 		},
 		CreatedAt: time.MilliToTime(nook.DateCreated),
-		UpdatedAt: time.MilliToTime(nook.DateModified),
+		UpdatedAt: dateModified,
 		UUID:      snID,
 	}
 }
@@ -198,16 +189,51 @@ func convertHTMLToMarkdown(content string) string {
 	return markdown
 }
 
-func ProcessConversion(file notesnook.ExportData) ([]byte, error) {
-	notesnookData, err := notesnook.ProcessNotesnookExportData(file)
-	if err != nil {
-		return nil, err
+func ProcessConversionAndSaveToFile(nooks []notesnook.Nook) error {
+	for _, nook := range nooks {
+		storeDataInMaps(nook, tipTaps)
 	}
 
-	contentNotes, err := json.Marshal(convertNotesnookToStandardNotes(notesnookData))
+	numOfNotes, err := strconv.Atoi(os.Getenv(numOfNotesPerFile))
 	if err != nil {
-		return nil, err
+		numOfNotes = 200
 	}
 
-	return contentNotes, nil
+	return splitAndStoreConvertedNotes(convertNotesnookToStandardNotes(nooks), numOfNotes, 1)
+}
+
+func splitAndStoreConvertedNotes(items []Item, numOfNotes int, index int) error {
+	var remainingItems []Item
+
+	if len(items) > numOfNotes {
+		remainingItems = items[numOfNotes:]
+		items = items[:numOfNotes]
+	}
+
+	contentNotes, err := json.Marshal(StandardNotes{Version: Version004, Items: items})
+	if err != nil {
+		return err
+	}
+
+	filename := fmt.Sprintf("%d_converted.txt", index)
+
+	if err = writeAmountOfNotesToFile(contentNotes, filename); err != nil {
+		return err
+	}
+
+	if len(remainingItems) > 0 {
+		index++
+		return splitAndStoreConvertedNotes(remainingItems, numOfNotes, index)
+	}
+
+	return nil
+}
+
+func writeAmountOfNotesToFile(items []byte, filename string) error {
+	err := fileUtil.CreateFileFromContent(items, filename)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

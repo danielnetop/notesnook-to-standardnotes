@@ -14,6 +14,8 @@ import (
 	fileUtil "github.com/danielnetop/notesnook-to-standardnotes/internal/file"
 )
 
+const debugNotesnookData = "DEBUG_NOTESNOOK_DATA"
+
 func ValidateBackupFiles(zf *zip.ReadCloser) ([]ExportData, error) {
 	var files []ExportData
 
@@ -31,7 +33,6 @@ func ValidateBackupFiles(zf *zip.ReadCloser) ([]ExportData, error) {
 			return nil, errNotDecryptedBackup
 		}
 
-		content.FileName = fmt.Sprintf("%s_converted.txt", file.Name)
 		content.DebugFileName = fmt.Sprintf("%s_notesnook_debug.json", file.Name)
 
 		files = append(files, content)
@@ -84,8 +85,7 @@ func ProcessNotesnookExportData(file ExportData) ([]Nook, error) {
 		return []Nook{}, err
 	}
 
-	debugNotesnook := os.Getenv("DEBUG_NOTESNOOK_DATA")
-	if strings.ToLower(debugNotesnook) == "true" {
+	if strings.ToLower(os.Getenv(debugNotesnookData)) == "true" {
 		debugData, err := json.MarshalIndent(nooks, "", "  ")
 		if err != nil {
 			fmt.Println("Unable to write to debug file")

@@ -1,5 +1,7 @@
 package notesnook
 
+import "github.com/google/uuid"
+
 type ExportData struct {
 	Version       float64 `json:"version"`
 	Type          string  `json:"type"`
@@ -80,4 +82,14 @@ type Metadata struct {
 	HashType string `json:"hashType"`
 	Filename string `json:"filename"`
 	Type     string `json:"type"`
+}
+
+type NotebookInfo struct {
+	ID        uuid.UUID
+	NookID    string
+	Title     string
+	Notes     []string
+	CreatedAt string
+	UpdatedAt string
+	Parent    *uuid.UUID
 }
