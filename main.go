@@ -41,20 +41,27 @@ func main() {
 		return
 	}
 
+	var nooks []notesnook.Nook
+
 	for _, file := range files {
-		contentNotes, err := sn.ProcessConversion(file)
+		processedNooks, err := notesnook.ProcessNotesnookExportData(file)
 		if err != nil {
 			fmt.Println(err.Error())
 
 			return
 		}
 
-		err = fileUtil.CreateFileFromContent(contentNotes, file.FileName)
-		if err != nil {
-			fmt.Println(err.Error())
+		// This needs to be done this way because the note title and content might not be
+		// in the same notesnook backup file, so we need to fetch all data from backup
+		// and only after that we can process them into a sn file
+		nooks = append(nooks, processedNooks...)
+	}
 
-			return
-		}
+	err = sn.ProcessConversionAndSaveToFile(nooks)
+	if err != nil {
+		fmt.Println(err.Error())
+
+		return
 	}
 
 	if tags := sn.ConvertNotebooksToTags(); len(tags.Items) > 0 {

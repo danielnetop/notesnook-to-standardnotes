@@ -6,6 +6,7 @@ vendor
 .vscode/
 bin/
 *-plain*
+*converted.txt*
 attachments.zip
 *.nnbackupz
 *tags*.txt

@@ -40,7 +40,7 @@ type Content struct {
 	NoteType         NoteType    `json:"noteType"`
 	EditorIdentifier string      `json:"editorIdentifier"`
 	References       []Reference `json:"references"` // only tags have references to their notes and to their parents
-	AppData          interface{} `json:"appData"`
+	AppData          AppData     `json:"appData"`
 	PreviewPlain     string      `json:"preview_plain"`
 	Spellcheck       bool        `json:"spellcheck"`
 }
@@ -54,4 +54,7 @@ type Item struct {
 	UpdatedAtTimestamp int64       `json:"updated_at_timestamp"`
 	UpdatedAt          string      `json:"updated_at"`
 	UUID               uuid.UUID   `json:"uuid"`
+}
+type AppData struct {
+	OrgStandardnotesSn map[string]string `json:"org.standardnotes.sn"`
 }

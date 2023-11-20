@@ -16,9 +16,11 @@ After the tool runs the Notesnook information will be ready to import into Stand
   - Also download your attachments on `Settings > Profile > Open manager > Select all > Download`
     - Move the backup file (`nnbackupz` file) to the folder where you extracted the `notesnook-to-standardnotes` tool
     - Move the attachments file (`attachments.zip` file) to the folder where you extracted the `notesnook-to-standardnotes` tool
+- Since the notes content might not be in the same file as the note inside the Notesnook backup then a division of notes will be done
+  - By default, this tool will print 500 notes per file this can be overridden by setting the following env var `NUM_OF_NOTES_PER_FILE`
 - Find the converted Standard Notes import files in the same folder
   - You'll find multiple new files
-    - `0-plain-id_converted.txt`
+    - `1_converted.txt`
     - `0_tags.txt`
 
 - Steps to import into Standard Notes
