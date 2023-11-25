@@ -18,7 +18,10 @@ import (
 	"github.com/danielnetop/notesnook-to-standardnotes/internal/time"
 )
 
-const numOfNotesPerFile = "NUM_OF_NOTES_PER_FILE"
+const (
+	numOfNotesPerFileVar = "NUM_OF_NOTES_PER_FILE"
+	numOfNotesPerFile    = 500
+)
 
 var (
 	notebooks         = make(map[string]notesnook.NotebookInfo, 0)
@@ -194,9 +197,9 @@ func ProcessConversionAndSaveToFile(nooks []notesnook.Nook) error {
 		storeDataInMaps(nook, tipTaps)
 	}
 
-	numOfNotes, err := strconv.Atoi(os.Getenv(numOfNotesPerFile))
+	numOfNotes, err := strconv.Atoi(os.Getenv(numOfNotesPerFileVar))
 	if err != nil {
-		numOfNotes = 200
+		numOfNotes = numOfNotesPerFile
 	}
 
 	return splitAndStoreConvertedNotes(convertNotesnookToStandardNotes(nooks), numOfNotes, 1)
