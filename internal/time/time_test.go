@@ -13,7 +13,7 @@ func TestMilliToTime(t *testing.T) {
 	}{
 		{
 			milli: 1699404581000,
-			want:  "2023-11-08 00:49:41Z",
+			want:  "2023-11-08T00:49:41Z",
 		},
 	}
 	for _, tt := range tests {
