@@ -55,6 +55,7 @@ type Item struct {
 	UpdatedAt          string      `json:"updated_at"`
 	UUID               uuid.UUID   `json:"uuid"`
 }
+
 type AppData struct {
 	OrgStandardnotesSn map[string]string `json:"org.standardnotes.sn"`
 }
