@@ -24,11 +24,10 @@ const (
 )
 
 var (
-	notebooks         = make(map[string]notesnook.NotebookInfo, 0)
-	noteIDToUUID      = make(map[string]uuid.UUID, 0)
-	notebookHasNotes  = make(map[string][]string, 0)
-	imageHashFilename = make(map[string]string, 0)
-	tipTaps           = make(map[string]string, 0)
+	notebooks        = make(map[string]notesnook.NotebookInfo, 0)
+	noteIDToUUID     = make(map[string]uuid.UUID, 0)
+	notebookHasNotes = make(map[string][]string, 0)
+	tipTaps          = make(map[string]string, 0)
 )
 
 func convertNotesnookToStandardNotes(nooks []notesnook.Nook) []Item {
@@ -72,11 +71,7 @@ func storeDataInMaps(nook notesnook.Nook, tipTaps map[string]string) {
 	case notesnook.TypeRelation: // relation from notebook to note
 		// 1 note can only be in 1 notebook/topic
 		notebookHasNotes[nook.From.ID] = append(notebookHasNotes[nook.From.ID], nook.To.ID)
-	case notesnook.TypeAttachment:
-		if imageHashFilename[nook.Metadata.Hash] == "" {
-			imageHashFilename[nook.Metadata.Hash] = nook.Metadata.Filename
-		}
-	default:
+	default: // Do nothing
 	}
 }
 
@@ -97,7 +92,7 @@ func mapNookNoteToStandardNote(
 	doc.Find(matchHTMLTags).Each(func(i int, s *goquery.Selection) {
 		dataHash, hasAttr := s.Attr(fileAttributeName)
 		if hasAttr {
-			s.ReplaceWithHtml(fileUtil.ConvertFileToBase64(imageHashFilename[dataHash]))
+			s.ReplaceWithHtml(fileUtil.ConvertFileToBase64(dataHash))
 		}
 	})
 

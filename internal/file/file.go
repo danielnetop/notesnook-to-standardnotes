@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/gabriel-vasile/mimetype"
 )
 
@@ -97,7 +98,7 @@ const (
 	markdownFileFormat  = "[%s](%s)"
 )
 
-func ConvertFileToBase64(filename string) string {
+func ConvertFileToBase64(hash string) string {
 	zipFile := "attachments.zip"
 
 	zf, err := zip.OpenReader(zipFile)
@@ -113,25 +114,25 @@ func ConvertFileToBase64(filename string) string {
 	}(zf)
 
 	for _, file := range zf.File {
-		// this is because notesnook doesn't keep original names in some cases
-		// I uploaded one image with name `IMG_0001.jpg`, and then uploaded a different file
-		// with same name `IMG_0001.jpg` and after the second upload the attachment became `img_0001.jpg`,
-		// and it only kept the first attachment
-		if strings.EqualFold(file.Name, filename) {
-			content, err := GetFileContent(file)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
+		// this is because notesnook keeps same names in some cases
+		// for example screenshots from mac are uploaded as image.png, and this will lead to multiple
+		// image.png across the backup file, this way we compare the hash of the file and check if it's
+		// indeed the correct file
+		content, err := GetFileContent(file)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 
+		if hash == fmt.Sprintf("%016x", xxhash.Sum64(content)) {
 			mimeType := mimetype.Detect(content)
 
 			base64Encoding := fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(content))
 
 			if strings.Contains(mimeType.String(), "image/") {
-				return fmt.Sprintf(markdownImageFormat, filename, base64Encoding)
+				return fmt.Sprintf(markdownImageFormat, file.Name, base64Encoding)
 			}
 
-			return fmt.Sprintf(markdownFileFormat, filename, base64Encoding)
+			return fmt.Sprintf(markdownFileFormat, file.Name, base64Encoding)
 		}
 	}
 

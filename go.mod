@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.4.1
 	github.com/PuerkitoBio/goquery v1.8.1
+	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/google/uuid v1.4.0
 	github.com/stretchr/testify v1.4.0
